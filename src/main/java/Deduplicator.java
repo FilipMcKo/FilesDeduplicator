@@ -15,7 +15,7 @@ import picocli.CommandLine.Parameters;
 public class Deduplicator implements Runnable {
 
     final static String[] ALLOWED_EXTENSIONS = new String[] { "JPEG", "JPG", "PNG", "jpeg", "jpg", "png", "mov",
-                                                              "MOV", "MP4", "mp4" };
+                                                              "MOV", "MP4", "mp4", "MTS", "mts", "avi", "AVI", "ARW", "arw" };
     final static boolean DO_RECURSIVE_SEARCH = true;
 
     @Parameters(paramLabel = "<folder-path>",
@@ -42,14 +42,12 @@ public class Deduplicator implements Runnable {
         Collection<File> files = FileUtils.listFiles(new File(pictureFolderPath), ALLOWED_EXTENSIONS,
                                                      DO_RECURSIVE_SEARCH);
         Map<MediaFile, Boolean> picFileToDeduplicatedMap = createInitialPicFileMapping(files);
-
-        log.info("Number of all files available in directory: {}", files.size());
-        boolean logTheFilesNames = true;
+        int nrOfAllFiles  = files.size();
+        boolean logTheFilesNames = false;
         if (logTheFilesNames) {
             log.info("The following files found in {} directory", pictureFolderPath);
             files.forEach(file -> log.info(file.getAbsolutePath()));
         }
-        log.info("Number of all unique files available in directory: {}", picFileToDeduplicatedMap.keySet().size());
         int duplicateCounter = 1;
         for (File file : files) {
             MediaFile mediaFile = new MediaFile(file.lastModified(), FileUtils.sizeOf(file), file.getName());
@@ -58,12 +56,14 @@ public class Deduplicator implements Runnable {
                     new File(duplicatesPath + "\\" + "Dupl" + duplicateCounter++ + "_" + file.getName()))) {
                     log.info("{} was successfully moved to 'duplicates' directory.", file.getName());
                 } else {
-                    log.error("Failed to move {} to 'duplicates' directory", file.getName());
+                    log.error("Failed to move {} to {} directory", file.getName(), duplicatesPath);
                 }
             } else {
                 picFileToDeduplicatedMap.put(mediaFile, true);
             }
         }
+        log.info("Number of all files available in directory: {}", nrOfAllFiles);
+        log.info("Number of all unique files available in directory: {}", picFileToDeduplicatedMap.keySet().size());
     }
 
     private void createDuplicatesFolder(String duplicatesPath) {
